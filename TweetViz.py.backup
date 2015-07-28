@@ -1,0 +1,45 @@
+import tweepy
+import time
+#insert your Twitter keys here
+consumer_key ='Gfo2favWdKJLOHsEh1F3AXPyl'
+consumer_secret='POuONd8rv6f33d8g8Z1WF4tEIRBI4CXyXVp9ngS6HvOeQJFB8u'
+access_token='23743958-5P8DVu4zGjZv3IA0cfOten9i6vvl9UXPASG5AZWHu'
+access_secret='Nw2Sgralb73sQmKaIWq7akPXS1GUClHWKipQdDgj3rgAU'
+ 
+auth = tweepy.auth.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_secret)
+api = tweepy.API(auth)
+ 
+list= open('list.txt','w')
+ 
+if(api.verify_credentials):
+    print '-------------------------\n*** You are logged in ***\n-------------------------'
+
+#Set starting Twitter handle
+username = ['moixera']
+
+user = tweepy.Cursor(api.followers, screen_name=username).items()
+
+#Set the number of levels to follow
+depth=3
+
+#Start extracting each level followers
+while depth != 0:   
+    for handle in username:
+            print '\n\n Getting followers from: @' + handle+'\n\n'   
+            user = tweepy.Cursor(api.followers, screen_name=handle).items()
+            while True:
+                try:
+                    u = next(user)
+                    list.write(u.screen_name +'\n')
+                    print u.screen_name
+                except:
+                    time.sleep(15*60)
+                    print 'We have exceeded the rate limit. Sleeping for 15 minutes'
+                    u = next(user)
+                    list.write(u.screen_name +'\n')
+                    print u.screen_name
+            username = list.read().splitlines()
+            print 'Moving to next username'
+    depth = depth-1
+list.close()
