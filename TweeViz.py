@@ -4,6 +4,7 @@ import tweepy
 import pandas as pd
 from datetime import datetime
 import TwitterLogin
+import time
 import config
 
 #Login into Twitter
@@ -44,15 +45,20 @@ with open('output/nodes.csv', 'a') as n:
                     if username in output.Username.values:
                         continue
                     else:
-        #Start extracting each level followers
-                        time.sleep(30)
-                        for user in tweepy.Cursor(config.api.followers, screen_name=username).items():
-                            ids.append(str(user.screen_name))                                  
+        #Start extracting followers' IDs
+                        for page in tweepy.Cursor(config.api.followers_ids, screen_name=username).pages():
+                            time.sleep(60)
+                            ids = []
+                            ids.append(page)
+        #Getting followers' usernames
+                        for u in range(len(ids)):
+                            ids = config.api.lookup_users(user_ids=ids[u])
+                            ids = [str(u.screen_name) for u in ids]
+                            time.sleep(60)
         #Add data to the output data frame
                             for i in range(len(ids)):
                                 t = datetime.now()
                                 output.loc[i] = [username,ids[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
-                                output = output[output.Username != output.Follower]
         #Write output file
                         output.to_csv(o, mode='a', header=False)
         #Add data to the nodes data frame
@@ -64,8 +70,8 @@ with open('output/nodes.csv', 'a') as n:
                         edges.Source = output.Username
                         edges.Target = output.Follower
                         for i in range(len(edges.Source)):
-                            edges.loc[i+1]['Type'] = Type
-                            edges.loc[i+1]['Label'] = edges.Source[i+1] + ' - ' + edges.Target[i+1]
+                            edges.loc[i]['Type'] = Type
+                            edges.loc[i]['Label'] = edges.Source[i] + ' - ' + edges.Target[i]
         #Write edges file
                         edges.to_csv(e, mode='a', header=False)
 #Reset depth value        
