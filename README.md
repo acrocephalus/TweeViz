@@ -1,3 +1,5 @@
+#Welcome to TweeViz v1.0b!!
+
 TweeViz is a command line crossplatform tool written in Python. It will retrieve all users for a given user.
 
 #Parameters
