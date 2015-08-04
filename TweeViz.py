@@ -23,10 +23,11 @@ edges.index.name = 'Id'
 Type = 'Undirected'
 
 #Set starting Twitter handle
-ids = [raw_input('Enter the Twitter username for which to get data: ')]
+ids = [raw_input('Username: ')]
 
 #Set depth
-depth = 1
+depth = raw_input('Depth: ') or '1'
+
 with open('nodes.csv', 'a') as n:
     with open('output.csv', 'a') as o:
         with open('edges.csv', 'a') as e:
