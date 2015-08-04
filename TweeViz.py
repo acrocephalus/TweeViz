@@ -28,9 +28,9 @@ ids = [raw_input('Username: ')]
 #Set depth
 depth = int(raw_input('Depth (defaults to 1): ') or '1')
 
-with open('nodes.csv', 'a') as n:
-    with open('output.csv', 'a') as o:
-        with open('edges.csv', 'a') as e:
+with open('output/nodes.csv', 'a') as n:
+    with open('output/output.csv', 'a') as o:
+        with open('output/edges.csv', 'a') as e:
         #Initialize output file            
             output.to_csv(o, mode='a')
         #Initialize nodes file            
@@ -45,6 +45,7 @@ with open('nodes.csv', 'a') as n:
                         continue
                     else:
         #Start extracting each level followers
+                        time.sleep(30)
                         for user in tweepy.Cursor(config.api.followers, screen_name=username).items():
                             ids.append(str(user.screen_name))                                  
         #Add data to the output data frame
@@ -52,22 +53,22 @@ with open('nodes.csv', 'a') as n:
                                 t = datetime.now()
                                 output.loc[i] = [username,ids[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
                                 output = output[output.Username != output.Follower]
-    #Write output file
-                output.to_csv(o, mode='a', header=False)
-    #Add data to the nodes data frame
-                nodes.Nodes = list(pd.unique(output.Follower.ravel()))
-                nodes.Label = list(pd.unique(output.Follower.ravel()))
+        #Write output file
+                        output.to_csv(o, mode='a', header=False)
+        #Add data to the nodes data frame
+                        nodes.Nodes = list(pd.unique(output.Follower.ravel()))
+                        nodes.Label = list(pd.unique(output.Follower.ravel()))
         #Write nodes file
-                nodes.to_csv(n, mode='a', header=False)
+                        nodes.to_csv(n, mode='a', header=False)
         #Add data to the edges data frame
-                edges.Source = output.Username
-                edges.Target = output.Follower
-                for i in range(len(edges.Source)):
-                    edges.loc[i+1]['Type'] = Type
-                    edges.loc[i+1]['Label'] = edges.Source[i+1] + ' - ' + edges.Target[i+1]
+                        edges.Source = output.Username
+                        edges.Target = output.Follower
+                        for i in range(len(edges.Source)):
+                            edges.loc[i+1]['Type'] = Type
+                            edges.loc[i+1]['Label'] = edges.Source[i+1] + ' - ' + edges.Target[i+1]
         #Write edges file
-                edges.to_csv(e, mode='a', header=False)
-        #Reset depth value        
+                        edges.to_csv(e, mode='a', header=False)
+#Reset depth value        
                 depth = depth-1
 
 o.close()

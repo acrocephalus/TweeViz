@@ -14,4 +14,4 @@ nodes.csv: it is a file formatted according to the Gephi specifications so it ca
 edges.csv: it is a file formatted according to the Gephi specifications so it can be directly imported.
 
 #Caution
-This program uses the Twitter's API so it is subject to its ToS. For more information on Twitter's API check https://dev.twitter.com/rest/public/rate-limiting
+This program uses the Twitter's API so it is subject to its ToS. In order not to hit its rate limits, a sleeping time of 30 seconds is placed before making a new request. For more information on Twitter's API check https://dev.twitter.com/rest/public/rate-limiting
