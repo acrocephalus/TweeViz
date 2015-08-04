@@ -26,7 +26,7 @@ Type = 'Undirected'
 ids = [raw_input('Username: ')]
 
 #Set depth
-depth = int(raw_input('Depth (defaults to 0: ') or '1')
+depth = int(raw_input('Depth (defaults to 1: ') or '1')
 
 with open('nodes.csv', 'a') as n:
     with open('output.csv', 'a') as o:
