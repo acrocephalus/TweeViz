@@ -6,6 +6,9 @@ from datetime import datetime
 import TwitterLogin
 import time
 import config
+from tweetools import grouper
+from StringIO import StringIO
+import sys
 
 #Login into Twitter
 TwitterLogin.login()
@@ -17,66 +20,80 @@ output.index.name = 'Id'
 #Create a data frame where to store nodes data
 nodes = pd.DataFrame(columns=['Nodes','Label'])
 nodes.index.name = 'Id'
-
+with open('output/nodes.csv', 'a') as n:
+    nodes.to_csv(n, mode='a')
+    n.close()
 #Create a data frame where to store edges data
 edges = pd.DataFrame(columns=['Source','Target','Type','Label','Weight'])
 edges.index.name = 'Id'
 Type = 'Undirected'
+with open('output/edges.csv', 'a') as e:
+    edges.to_csv(e, mode='a')
+e.close
 
 #Set starting Twitter handle
-ids = [raw_input('Username: ')]
+user = [raw_input('Username: ')]
 
 #Set depth
 depth = int(raw_input('Depth (defaults to 1): ') or '1')
 
-with open('output/nodes.csv', 'a') as n:
-    with open('output/output.csv', 'a') as o:
-        with open('output/edges.csv', 'a') as e:
-        #Initialize output file            
-            output.to_csv(o, mode='a')
-        #Initialize nodes file            
-            nodes.to_csv(n, mode='a')
-        #Initialize edges file            
-            edges.to_csv(e, mode='a')
-            while depth > 0:
-                for i in range(len(ids)):
-                    username = ids[i]
-        #Check if username has been already processed
-                    if username in output.Username.values:
-                        continue
-                    else:
-        #Start extracting followers' IDs
-                        for page in tweepy.Cursor(config.api.followers_ids, screen_name=username).pages():
-                            time.sleep(60)
-                            ids = []
-                            ids.append(page)
-        #Getting followers' usernames
-                        for u in range(len(ids)):
-                            ids = config.api.lookup_users(user_ids=ids[u])
-                            ids = [str(u.screen_name) for u in ids]
-                            time.sleep(60)
-        #Add data to the output data frame
-                            for i in range(len(ids)):
-                                t = datetime.now()
-                                output.loc[i] = [username,ids[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
-        #Write output file
-                        output.to_csv(o, mode='a', header=False)
+
+while depth > 0:
+    for i in range(len(user)):
+        username = user[i]
+#Check if username has been already processed
+        if username in output.Username.values:
+            continue
+        else:        
+#Start extracting followers' IDs
+            print '#Retrieving users\' ids \n'
+            for page in tweepy.Cursor(config.api.followers_ids, screen_name=username).pages():
+                ids = []
+                ids.append(page)
+#Getting followers' usernames
+            print '#Retrieving users\' usernames\n'
+            for u in range(len(ids)):
+                groups = grouper(ids,100)                       
+                for t in range(len(groups[0])):
+                    try:
+                        for batch,v in enumerate(groups[0]):
+                            print '#Retrieving usernames batch number ' + str(batch+1) + '\n'
+                        
+                        ids2 = config.api.lookup_users(user_ids=[groups[0][t]])
+                        usernames = []
+                        usernames.append([str(u.screen_name) for u in ids2])
+                        usernames = usernames[0]
+                    except:
+                        print '#The user has changed, moved or deleted his/her account.\n\
+                        #He/She may also be suspended.\n\
+                        #Moving to the next user\n'
+            #Add data to the output data frame
+                    for i in range(len(usernames)):
+                        t = datetime.now()
+                        output.loc[i] = [username,usernames[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
+                        with open('output/output.csv', 'a') as o:
+                            output.to_csv(o, mode='a', header=False)                                        
         #Add data to the nodes data frame
-                        nodes.Nodes = list(pd.unique(output.Follower.ravel()))
-                        nodes.Label = list(pd.unique(output.Follower.ravel()))
-        #Write nodes file
+                    nodes.Nodes = list(pd.unique(output.Follower.ravel()))
+                    nodes.Label = list(pd.unique(output.Follower.ravel()))
+                    with open('output/nodes.csv', 'a') as n:
                         nodes.to_csv(n, mode='a', header=False)
-        #Add data to the edges data frame
-                        edges.Source = output.Username
-                        edges.Target = output.Follower
-                        for i in range(len(edges.Source)):
-                            edges.loc[i]['Type'] = Type
-                            edges.loc[i]['Label'] = edges.Source[i] + ' - ' + edges.Target[i]
-        #Write edges file
+
+    #Add data to the edges data frame
+                    edges.Source = output.Username
+                    edges.Target = output.Follower
+                    for i in range(len(edges.Source)):
+                        edges.loc[i]['Type'] = Type
+                        edges.loc[i]['Label'] = str(edges.Source[i]) + ' - ' + str(edges.Target[i])
+                    with open('output/edges.csv', 'a') as e:
                         edges.to_csv(e, mode='a', header=False)
+
 #Reset depth value        
                 depth = depth-1
+                
 
-o.close()
-n.close()
+n.close()    
+o.close()    
 e.close()
+
+
