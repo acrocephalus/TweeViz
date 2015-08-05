@@ -7,8 +7,10 @@ import TwitterLogin
 import time
 import config
 from tweetools import grouper
-from StringIO import StringIO
-import sys
+from setproctitle import setproctitle 
+
+setproctitle('TweeViz')   
+
 
 #Login into Twitter
 TwitterLogin.login()
@@ -57,7 +59,7 @@ while depth > 0:
                 for u in range(len(ids)):
                     usernames = []                                                                                   
                     try:
-                        for t in range(len(groups)):                                            
+                        for t in range(len(groups)):
                             ids2 = config.api.lookup_users(user_ids=[groups[t]])
                             usernames.append([str(u.screen_name) for u in ids2])
                             print 'Going to sleep for 60 seconds to avoid hitting the rate limits'
@@ -70,15 +72,13 @@ while depth > 0:
                             output.loc[i] = [username,usernames[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
                         with open('output/output.csv', 'a') as o:
                             output.to_csv(o, mode='a', header=False)
-                        o.close()                      
-                                                
+                        o.close()                                                                   
                         #Add data to the nodes data frame
                         nodes.Nodes = list(pd.unique(output.Follower.ravel()))
                         nodes.Label = list(pd.unique(output.Follower.ravel()))
                         with open('output/nodes.csv', 'a') as n:
                             nodes.to_csv(n, mode='a', header=False)
-                        n.close()
-        
+                        n.close()        
                         #Add data to the edges data frame
                         edges.Source = output.Username
                         edges.Target = output.Follower
