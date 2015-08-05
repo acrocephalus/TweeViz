@@ -32,11 +32,12 @@ with open('output/edges.csv', 'a') as e:
 e.close
 
 #Set starting Twitter handle
-user = [raw_input('Username: ')]
+user = ['acrocephalus']
+#user = [raw_input('Username: ')]
 
 #Set depth
-depth = int(raw_input('Depth (defaults to 1): ') or '1')
-
+#depth = int(raw_input('Depth (defaults to 1): ') or '1')
+depth = 3
 
 while depth > 0:
     for i in range(len(user)):
@@ -51,49 +52,51 @@ while depth > 0:
                 ids = []
                 ids.append(page)
 #Getting followers' usernames
-            print '#Retrieving users\' usernames\n'
-            for u in range(len(ids)):
-                groups = grouper(ids,100)                       
-                for t in range(len(groups[0])):
+                print '#Retrieving users\' usernames\n'
+                groups = grouper(ids[0],100)                
+                for u in range(len(ids)):
+                    usernames = []                                                                                   
                     try:
-                        for batch,v in enumerate(groups[0]):
-                            print '#Retrieving usernames batch number ' + str(batch+1) + '\n'
+                        for t in range(len(groups)):                                            
+                            ids2 = config.api.lookup_users(user_ids=[groups[t]])
+                            usernames.append([str(u.screen_name) for u in ids2])
+                            print 'Going to sleep for 60 seconds to avoid hitting the rate limits'
+                            time.sleep(60)
+                            print '#Retrieving users\' usernames\n'
+                        usernames = list(set([x for y in usernames for x in y]))                            
+                        #Add data to the output data frame
+                        for i in range(len(usernames)):
+                            t = datetime.now()
+                            output.loc[i] = [username,usernames[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
+                        with open('output/output.csv', 'a') as o:
+                            output.to_csv(o, mode='a', header=False)
+                        o.close()                      
+                                                
+                        #Add data to the nodes data frame
+                        nodes.Nodes = list(pd.unique(output.Follower.ravel()))
+                        nodes.Label = list(pd.unique(output.Follower.ravel()))
+                        with open('output/nodes.csv', 'a') as n:
+                            nodes.to_csv(n, mode='a', header=False)
+                        n.close()
+        
+                        #Add data to the edges data frame
+                        edges.Source = output.Username
+                        edges.Target = output.Follower
+                        for i in range(len(edges.Source)):
+                            edges.loc[i]['Type'] = Type
+                            edges.loc[i]['Label'] = str(edges.Source[i]) + ' - ' + str(edges.Target[i])
+                        with open('output/edges.csv', 'a') as e:
+                            edges.to_csv(e, mode='a', header=False)
                         
-                        ids2 = config.api.lookup_users(user_ids=[groups[0][t]])
-                        usernames = []
-                        usernames.append([str(u.screen_name) for u in ids2])
-                        usernames = usernames[0]
                     except:
                         print '#The user has changed, moved or deleted his/her account.\n\
                         #He/She may also be suspended.\n\
                         #Moving to the next user\n'
-            #Add data to the output data frame
-                    for i in range(len(usernames)):
-                        t = datetime.now()
-                        output.loc[i] = [username,usernames[i],("%s-%s-%s %s:%s:%s" % (t.year,t.month,t.day, t.hour, t.month, t.second))]
-                        with open('output/output.csv', 'a') as o:
-                            output.to_csv(o, mode='a', header=False)                                        
-        #Add data to the nodes data frame
-                    nodes.Nodes = list(pd.unique(output.Follower.ravel()))
-                    nodes.Label = list(pd.unique(output.Follower.ravel()))
-                    with open('output/nodes.csv', 'a') as n:
-                        nodes.to_csv(n, mode='a', header=False)
+            print 'Going to sleep for 60 seconds to avoid hitting the rate limits'
+            time.sleep(60)
+#Reset users list    
+    user = output.Follower.tolist()
 
-    #Add data to the edges data frame
-                    edges.Source = output.Username
-                    edges.Target = output.Follower
-                    for i in range(len(edges.Source)):
-                        edges.loc[i]['Type'] = Type
-                        edges.loc[i]['Label'] = str(edges.Source[i]) + ' - ' + str(edges.Target[i])
-                    with open('output/edges.csv', 'a') as e:
-                        edges.to_csv(e, mode='a', header=False)
-
+            
 #Reset depth value        
-                depth = depth-1
-                
-
-n.close()    
-o.close()    
-e.close()
-
-
+    depth = depth-1            
